@@ -1,2 +1,0 @@
-#1 [Done] learn go
-#2 [Done] buy milk
