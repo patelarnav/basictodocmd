@@ -11,15 +11,12 @@ import (
 func markTodos(filename string,index int){
 	todos := loadTodos(filename)
 	target := todos[index-1]
-	parts := strings.Split(target, " ")
-	if len(parts) < 3 || parts[1] == "[Done]" {
+	if strings.HasPrefix(target,"[Done]"){
+		fmt.Println("Already marked done")
 		return
-	} else{
-		newParts := append(parts[:1], append([]string{"[Done]"},parts[1:]...)...)
-		newTarget := strings.Join(newParts, " ")
-		newtodos := append(todos[:index-1], append([]string{newTarget},todos[index:]...)...)
-		saveTodos(filename,newtodos)
-	}
+	} 
+	todos[index-1]="[Done] " + target
+	saveTodos(filename,todos)
 }
 
 func loadTodos(filename string) []string{
@@ -66,14 +63,8 @@ func saveTodos(filename string, todolist []string) {
 
 	writer := bufio.NewWriter(file)
 	//write each todo as a line
-	for ind, todo := range todolist{
-		x := todo[0]
-		switch x{
-		case '#':
-			fmt.Fprintln(writer,todo)
-		default:
-			fmt.Fprintf(writer,"#%d %s\n",ind+1,todo)
-		}
+	for _, todo := range todolist{
+		fmt.Fprintln(writer,todo)
 	}
 	writer.Flush()
 
@@ -100,8 +91,8 @@ func main(){
 		saveTodos(txt_file, todolist)
 	case "list":
 		fmt.Println(len(todolist),"items will be listed")
-		for _,item := range todolist{
-			fmt.Println(item)
+		for ind,item := range todolist{
+			fmt.Printf("#%d. %s\n",ind+1,item)
 		}
 	case "done":
 		if len(args) < 3{
@@ -114,7 +105,6 @@ func main(){
 			os.Exit(1)
 		}
 		markTodos(txt_file,ind)
-
 	default: 
 		fmt.Println("Unknown command")
 		os.Exit(1)
