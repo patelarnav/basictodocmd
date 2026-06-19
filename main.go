@@ -8,18 +8,33 @@ import (
 	"strings"
 )
 
-func markTodos(filename string,index int){
-	todos := loadTodos(filename)
+func get_index(arg string,length int) int{
+	ind, err := strconv.Atoi(arg)
+	if err != nil || ind <=0 || ind > length{
+		fmt.Println("Invalid index")
+		os.Exit(1)
+	}
+	return ind
+}
+
+func mark_index(filename string,index int){
+	todos := load_todo_list(filename)
 	target := todos[index-1]
 	if strings.HasPrefix(target,"[Done]"){
 		fmt.Println("Already marked done")
 		return
 	} 
 	todos[index-1]="[Done] " + target
-	saveTodos(filename,todos)
+	save_todo_list(filename,todos)
 }
 
-func loadTodos(filename string) []string{
+func delete_index(filename string, index int){
+	todos := load_todo_list(filename)
+	newTodos := append(todos[:index-1],todos[index:]...)
+	save_todo_list(filename,newTodos)
+}
+
+func load_todo_list(filename string) []string{
 	//open file
 	file,err := os.Open(filename)
 	if err != nil{
@@ -50,7 +65,7 @@ func loadTodos(filename string) []string{
 	return todos
 }
 
-func saveTodos(filename string, todolist []string) {
+func save_todo_list(filename string, todolist []string) {
 
 	// 	//open/ create file
 	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
@@ -59,7 +74,6 @@ func saveTodos(filename string, todolist []string) {
 		os.Exit(1)
 	}
 	defer file.Close()
-	// fmt.Println("file exists")
 
 	writer := bufio.NewWriter(file)
 	//write each todo as a line
@@ -73,13 +87,12 @@ func saveTodos(filename string, todolist []string) {
 func main(){
 	txt_file := "todos.txt"
 	args := os.Args
-	// fmt.Println(args)
 	if len(args) < 2{
 		fmt.Println("Need more args")
 		os.Exit(1)
 	}
 
-	todolist := loadTodos(txt_file)
+	todolist := load_todo_list(txt_file)
 	switch args[1]{
 	case "add":
 		if len(args) < 3{
@@ -88,7 +101,7 @@ func main(){
 		}
 		todolist = append(todolist, args[2] )
 		fmt.Println("Added:", args[2])
-		saveTodos(txt_file, todolist)
+		save_todo_list(txt_file, todolist)
 	case "list":
 		fmt.Println(len(todolist),"items will be listed")
 		for ind,item := range todolist{
@@ -99,12 +112,17 @@ func main(){
 			fmt.Println("Need index for marking done")
 			os.Exit(1)
 		}
-		ind, err := strconv.Atoi(args[2])
-		if err != nil || ind <=0 || ind > len(todolist){
-			fmt.Println("Invalid index")
+		ind := get_index(args[2],len(todolist))
+		mark_index(txt_file,ind)
+		fmt.Printf("Item %d marked as done\n",ind)
+	case "delete":
+		if len(args) < 3{
+			fmt.Println("Need index for marking delete")
 			os.Exit(1)
 		}
-		markTodos(txt_file,ind)
+		ind := get_index(args[2],len(todolist))
+		delete_index(txt_file,ind)
+		fmt.Printf("Item %d has been deleted from the list\n",ind)
 	default: 
 		fmt.Println("Unknown command")
 		os.Exit(1)
